@@ -9,9 +9,13 @@ Diseño completo: [docs/superpowers/specs/2026-07-07-llm-jala-design.md](docs/su
 ## Correr local
 
 ```bash
-docker compose up -d
-docker compose exec ollama ollama pull qwen2.5:3b   # solo la primera vez
+cp .env.example .env   # OLLAMA_URL es obligatoria; nunca está hardcodeada en el código
+docker compose up -d   # el modelo (~2 GB) se descarga solo en el primer arranque
 ```
+
+En producción (Coolify) se usa solo `docker-compose.yml` (sin puertos publicados; el
+servicio `api` se expone por dominio en su puerto interno 8000). Si defines la env var
+`LLM_JALA_API_KEY`, `POST /clasificar` exige el header `X-API-Key` con ese valor.
 
 ## Probar
 

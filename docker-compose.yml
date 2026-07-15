@@ -4,13 +4,15 @@ services:
     environment:
       OLLAMA_URL: http://ollama:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
-    ports:
-      - "8100:8000" # solo dev local; en Coolify se expone por dominio, sin puertos
+      LLM_JALA_API_KEY: ${LLM_JALA_API_KEY:-}
     depends_on:
       - ollama
+    # sin ports: en Coolify se expone el servicio `api` (puerto interno 8000) por dominio
 
   ollama:
     image: ollama/ollama
+    # descarga el modelo en el primer arranque; en los siguientes el pull es un no-op
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 3 && ollama pull ${OLLAMA_MODEL:-qwen2.5:3b}; wait"]
     volumes:
       - ollama_data:/root/.ollama
     # sin ports: solo accesible desde la red interna de Docker

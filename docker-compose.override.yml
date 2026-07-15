@@ -1,0 +1,6 @@
+# Solo desarrollo local: docker compose lo carga automáticamente junto al compose base.
+# En Coolify apunta únicamente a docker-compose.yml, así este archivo no aplica.
+services:
+  api:
+    ports:
+      - "8100:8000"

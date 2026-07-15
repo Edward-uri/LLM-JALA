@@ -1,9 +1,18 @@
-"""Lógica pura de clasificación: gate por estrellas y validación de la salida del LLM."""
+import re
 
 POLARIDADES_VALIDAS = {"positiva", "negativa", "mixta", "neutra"}
 
+MAX_CHARS_COMENTARIO = 160  # límite del campo comentario en la app
+_MARCADORES = re.compile(r"<<<\s*(EVALUACION|FIN)\s*>>>", re.IGNORECASE)
+_CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+def sanear_comentario(texto: str) -> str:
+    texto = _MARCADORES.sub(" ", texto)
+    texto = _CONTROL.sub(" ", texto)
+    texto = re.sub(r"\s+", " ", texto).strip()
+    return texto[:MAX_CHARS_COMENTARIO]
+
 def filtrar_candidatas(candidatas: list[dict], calificacion: int) -> list[dict]:
-    """Gate por estrellas: >=4 solo positivas, <=2 solo negativas, 3 ambas."""
     if calificacion >= 4:
         return [c for c in candidatas if c["polaridad"] == "positiva"]
     if calificacion <= 2:
@@ -20,8 +29,6 @@ def polaridad_por_estrellas(calificacion: int) -> str:
 def validar_respuesta(
     etiquetas_modelo: list, polaridad_modelo, candidatas: list[dict], calificacion: int
 ) -> tuple[list[int], str]:
-    """Filtra la salida del LLM: solo ids presentes en las candidatas; polaridad
-    inválida cae al fallback por estrellas."""
     permitidos = {c["id"] for c in candidatas}
     etiquetas = []
     for e in etiquetas_modelo:
