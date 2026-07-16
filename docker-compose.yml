@@ -1,21 +1,32 @@
 services:
   api:
     build: .
+    restart: unless-stopped
     environment:
       OLLAMA_URL: http://ollama:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
       LLM_JALA_API_KEY: ${LLM_JALA_API_KEY:-}
     depends_on:
       - ollama
-    # sin ports: en Coolify se expone el servicio `api` (puerto interno 8000) por dominio
+    # Sin publicar al host: en Coolify se asigna un DOMINIO a este servicio y su proxy
+    # enruta al puerto 8000 del contenedor (por eso el expose es obligatorio).
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   ollama:
     image: ollama/ollama
+    restart: unless-stopped
     # descarga el modelo en el primer arranque; en los siguientes el pull es un no-op
     entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 3 && ollama pull ${OLLAMA_MODEL:-qwen2.5:3b}; wait"]
     volumes:
       - ollama_data:/root/.ollama
-    # sin ports: solo accesible desde la red interna de Docker
+    # sin ports ni dominio: solo accesible desde la red interna de Docker
 
 volumes:
   ollama_data:
